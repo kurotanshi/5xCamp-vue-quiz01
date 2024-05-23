@@ -1,28 +1,30 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from "vue";
 const uBikeStops = ref([]);
 
 // 欄位說明:
 // sno：站點代號、 sna：場站名稱(中文)、 total：場站總停車格、
-// available_rent_bikes：場站目前可用車輛數量、 
+// available_rent_bikes：場站目前可用車輛數量、
 // sarea：場站區域(中文)、 mday：資料更新時間、
 // lat：緯度、 lng：經度、 ar：地(中文)、 sareaen：場站區域(英文)、
 // snaen：場站名稱(英文)、 aren：地址(英文)、 bemp：空位數量、 act：全站禁用狀態
-fetch('https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json')
-  .then(res => res.text())
-  .then(data => {
+fetch(
+  "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
+)
+  .then((res) => res.text())
+  .then((data) => {
     uBikeStops.value = JSON.parse(data);
   });
 
 const timeFormat = (val) => {
   // 時間格式
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
-  return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
+  return val.replace(pattern, "$1/$2/$3 $4:$5:$6");
 };
 </script>
 
-<template>  
-<!--
+<template>
+  <!--
 練習： YouBike 臺北市公共自行車即時資訊，實作以下功能
 1. 站點名稱搜尋
 2. 目前可用車輛 / 總停車格 的排序功能
@@ -30,30 +32,32 @@ const timeFormat = (val) => {
 -->
   <div class="my-4">
     <p class="my-4 pl-2">
-      站點名稱搜尋: 
-      <input type="text" class="border w-60 p-1 ml-2">
+      站點名稱搜尋:
+      <input type="text" class="border w-60 p-1 ml-2" />
     </p>
-    
+
     <table class="table table-striped">
       <thead>
         <tr>
           <th class="w-12">#</th>
           <th>場站名稱</th>
           <th>場站區域</th>
-          <th>目前可用車輛
+          <th>
+            目前可用車輛
             <i class="fa fa-sort-asc" aria-hidden="true"></i>
             <i class="fa fa-sort-desc" aria-hidden="true"></i>
           </th>
-          <th>總停車格
+          <th>
+            總停車格
             <i class="fa fa-sort-asc" aria-hidden="true"></i>
             <i class="fa fa-sort-desc" aria-hidden="true"></i>
           </th>
-          <th>資料更新時間</th>          
+          <th>資料更新時間</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
-          <td>{{ idx +1 }}</td>
+          <td>{{ idx + 1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
           <td>{{ s.available_rent_bikes }}</td>
@@ -62,7 +66,7 @@ const timeFormat = (val) => {
         </tr>
       </tbody>
     </table>
-    
+
     <!-- 頁籤 -->
     <ul class="my-4 flex justify-center">
       <li class="page-item cursor-pointer">
@@ -105,11 +109,10 @@ const timeFormat = (val) => {
 
       <li class="page-item cursor-pointer">
         <span class="page-link" href>&gt;</span>
-      </li>      
+      </li>
       <li class="page-item cursor-pointer">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
-
   </div>
 </template>
