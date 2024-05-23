@@ -1,6 +1,28 @@
 <script setup>
 import { ref } from "vue";
+import { useDebounceFn } from "@vueuse/core";
+
 const uBikeStops = ref([]);
+const filterUBikeStops = ref([]);
+const searchKey = ref("");
+
+const search = () => {
+  if (searchKey.value === "") {
+    calculatePage();
+    return;
+  }
+  const filterUBikeStops = uBikeStops.value.filter((item) =>
+    item.sna.includes(searchKey.value)
+  );
+  calculatePage(filterUBikeStops);
+};
+const searchDebounce = useDebounceFn(() => {
+  search();
+}, 1000);
+
+const calculatePage = (data = uBikeStops.value) => {
+  filterUBikeStops.value = data;
+};
 
 // 欄位說明:
 // sno：站點代號、 sna：場站名稱(中文)、 total：場站總停車格、
@@ -14,6 +36,7 @@ fetch(
   .then((res) => res.text())
   .then((data) => {
     uBikeStops.value = JSON.parse(data);
+    calculatePage();
   });
 
 const timeFormat = (val) => {
@@ -33,7 +56,13 @@ const timeFormat = (val) => {
   <div class="my-4">
     <p class="my-4 pl-2">
       站點名稱搜尋:
-      <input type="text" class="border w-60 p-1 ml-2" />
+      <input
+        type="text"
+        class="border w-60 p-1 ml-2"
+        @keyup.enter="search"
+        @input="searchDebounce"
+        v-model="searchKey"
+      />
     </p>
 
     <table class="table table-striped">
@@ -56,7 +85,7 @@ const timeFormat = (val) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
+        <tr v-for="(s, idx) in filterUBikeStops" :key="s.sno">
           <td>{{ idx + 1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
