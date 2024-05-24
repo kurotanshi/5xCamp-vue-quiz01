@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 const uBikeStops = ref([]);
+const searchResult = ref('');
 
 // 欄位說明:
 // sno：站點代號、 sna：場站名稱(中文)、 total：場站總停車格、
@@ -19,7 +20,38 @@ const timeFormat = (val) => {
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
+
+const filterUBikeStops = computed(()=>{
+  if(!searchResult.value){
+    return uBikeStops.value
+  }
+  return uBikeStops.value.filter(station=>station.sna.includes(searchResult.value))
+})
+
+// 關鍵字 highlight 處理
+const highlightKeyword = (text) => {
+  if (!searchResult.value) {
+    return text;
+  }
+  const index = text.toLowerCase().indexOf(searchResult.value.toLowerCase());
+  if (index === -1) {
+    return text;
+  }
+  const beforeMatch = text.substring(0, index);
+  const match = text.substring(index, index + searchResult.value.length);
+  const afterMatch = text.substring(index + searchResult.value.length);
+  return `${beforeMatch}<span class="highlight">${match}</span>${afterMatch}`;
+};
+
+
 </script>
+
+<style scoped>
+  .highlight {
+    background-color: #ffffcc;
+    color: #ff0022;
+  }
+</style>
 
 <template>  
 <!--
@@ -31,7 +63,7 @@ const timeFormat = (val) => {
   <div class="my-4">
     <p class="my-4 pl-2">
       站點名稱搜尋: 
-      <input type="text" class="border w-60 p-1 ml-2">
+      <input type="text" class="border w-60 p-1 ml-2" v-model="searchResult">
     </p>
     
     <table class="table table-striped">
@@ -52,9 +84,9 @@ const timeFormat = (val) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
+        <tr v-for="(s, idx) in filterUBikeStops" :key="s.sno">
           <td>{{ idx +1 }}</td>
-          <td>{{ s.sna }}</td>
+          <td v-html="highlightKeyword(s.sna)"></td>
           <td>{{ s.sarea }}</td>
           <td>{{ s.available_rent_bikes }}</td>
           <td>{{ s.total }}</td>
