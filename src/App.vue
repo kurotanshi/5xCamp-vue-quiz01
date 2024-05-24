@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue';
 const uBikeStops = ref([]);
 const searchResult = ref('');
+const sortKey = ref('');
+const sortOrder = ref(1);
 
 // 欄位說明:
 // sno：站點代號、 sna：場站名稱(中文)、 total：場站總停車格、
@@ -21,12 +23,25 @@ const timeFormat = (val) => {
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
 
-const filterUBikeStops = computed(()=>{
-  if(!searchResult.value){
-    return uBikeStops.value
+// 過濾和排序 uBikeStops
+const filterUBikeStops = computed(() => {
+  let filteredStops = uBikeStops.value;
+  if (searchResult.value) {
+    filteredStops = filteredStops.filter(station => station.sna.includes(searchResult.value));
   }
-  return uBikeStops.value.filter(station=>station.sna.includes(searchResult.value))
-})
+  if (sortKey.value) {
+    filteredStops.sort((a, b) => {
+      const aValue = a[sortKey.value];
+      const bValue = b[sortKey.value];
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return (aValue - bValue) * sortOrder.value;
+      } else {
+        return aValue.localeCompare(bValue) * sortOrder.value;
+      }
+    });
+  }
+  return filteredStops;
+});
 
 // 關鍵字 highlight 處理
 const highlightKeyword = (text) => {
@@ -43,13 +58,29 @@ const highlightKeyword = (text) => {
   return `${beforeMatch}<span class="highlight">${match}</span>${afterMatch}`;
 };
 
+// 處理排序
+const handleSort = (key) => {
+  if (sortKey.value === key) {
+    sortOrder.value = -sortOrder.value;
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 1;
+  }
+};
+
 
 </script>
 
-<style scoped>
-  .highlight {
+<style>
+  .highlight > span {
     background-color: #ffffcc;
     color: #ff0022;
+  }
+  .sortable {
+    cursor: pointer;
+  }
+  .sortable:hover {
+    color: #f2195b;
   }
 </style>
 
@@ -72,13 +103,13 @@ const highlightKeyword = (text) => {
           <th class="w-12">#</th>
           <th>場站名稱</th>
           <th>場站區域</th>
-          <th>目前可用車輛
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+          <th class="sortable" @click="handleSort('available_rent_bikes')">
+            目前可用車輛
+            <i :class="{'fa fa-sort-asc': sortKey === 'available_rent_bikes' && sortOrder === 1, 'fa fa-sort-desc': sortKey === 'available_rent_bikes' && sortOrder === -1}" aria-hidden="true"></i>
           </th>
-          <th>總停車格
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+          <th class="sortable" @click="handleSort('total')">
+            總停車格
+            <i :class="{'fa fa-sort-asc': sortKey === 'total' && sortOrder === 1, 'fa fa-sort-desc': sortKey === 'total' && sortOrder === -1}" aria-hidden="true"></i>
           </th>
           <th>資料更新時間</th>          
         </tr>
