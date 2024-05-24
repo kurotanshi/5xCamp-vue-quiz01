@@ -6,8 +6,10 @@ const sortKey = ref('sno');
 const sortOrder = ref('asc');
 
 const currentPage = ref(1);
-const perPage = ref(5); // 每頁顯示筆數
-const pagemenucount = ref(10); // 頁碼數
+const perPage = ref(10); // 每頁顯示筆數
+const maxpage = ref(10); // 最大頁碼數
+const pageControlCount = ref(10);
+
 
 // 欄位說明:
 // sno：站點代號、 sna：場站名稱(中文)、 total：場站總停車格、
@@ -30,6 +32,7 @@ const timeFormat = (val) => {
 
 // 篩選站點 (搜尋) + 排序 computed
 const queryStops = computed(() => {
+  console.log('queryStops');
   let stops = uBikeStops.value.filter((item) => {
     return item.sna.includes(keyword.value);
   });
@@ -44,7 +47,11 @@ const queryStops = computed(() => {
     });
   }
 
-  return stops;
+  //頁碼數
+  maxpage.value = Math.ceil(stops.length / perPage.value);
+
+  return stops.slice(currentPage.value === 1 ? 0 : (currentPage.value - 1) * perPage.value,
+    perPage.value * currentPage.value);
 });
 
 // 關鍵字高亮
@@ -79,8 +86,9 @@ const firstPage = () => {
 
 // 最後一頁
 const lastPage = () => {
-  currentPage.value = (queryStops.value.length / perPage.value) + 1;
-  //currentPage.value = Math.ceil(queryStops.value.length / perPage.value);
+
+  currentPage.value = maxpage.value;
+  console.log(currentPage.value);
 };
 
 const prevPage = () => {
@@ -88,7 +96,7 @@ const prevPage = () => {
 };
 
 const nextPage = () => {
-  currentPage.value = currentPage.value + 1;
+  currentPage.value = currentPage.value !== maxpage.value ? currentPage.value + 1 : maxpage.value;
 }
 
 </script>
@@ -136,23 +144,27 @@ const nextPage = () => {
     </table>
 
     <!-- 頁籤 -->
-    <ul class="my-4 flex justify-center">
-      <li class="page-item cursor-pointer" @click="firstPage">
+    <ul class="my-4 flex justify-center flex-wrap">
+      <li class="page-item " @click="firstPage"
+        :class="{ disabled: currentPage === 1, 'cursor-pointer': currentPage !== 1 }">
         <span class="page-link">第一頁</span>
       </li>
-      <li class="page-item cursor-pointer" @click="prevPage">
+      <li class="page-item " @click="prevPage"
+        :class="{ disabled: currentPage === 1, 'cursor-pointer': currentPage !== 1 }">
         <span class="page-link">&lt;</span>
       </li>
 
-      <li class="page-item cursor-pointer" v-for="i in pagemenucount" :key="i"
-        :class="currentPage === i ? 'active' : ''" @click="changePage(i)">
+      <li class="page-item cursor-pointer" v-for="i in maxpage" :key="i" :class="currentPage === i ? 'active' : ''"
+        @click="changePage(i)">
         <span class="page-link">{{ i }}</span>
       </li>
 
-      <li class="page-item cursor-pointer" @click="nextPage">
+      <li class="page-item cursor-pointer" @click="nextPage"
+        :class="{ disabled: currentPage === maxpage, 'cursor-pointer': currentPage !== maxpage }">
         <span class="page-link" href>&gt;</span>
       </li>
-      <li class="page-item cursor-pointer" @click="lastPage">
+      <li class="page-item cursor-pointer" @click="lastPage"
+        :class="{ disabled: currentPage === maxpage, 'cursor-pointer': currentPage !== maxpage }">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
