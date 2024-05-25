@@ -1,6 +1,9 @@
 <script setup>
-import { ref } from 'vue';
-const uBikeStops = ref([]);
+import { ref, computed, watch } from 'vue';
+const searchKey = ref('')
+const activePage = ref(1)
+const uBikeStops = ref([])
+const perPage = 10
 
 // 欄位說明:
 // sno：站點代號、 sna：場站名稱(中文)、 total：場站總停車格、
@@ -12,13 +15,49 @@ fetch('https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediat
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data);
-  });
+  })
+
+const filterBikeStops = computed(() => {
+  return uBikeStops.value.filter((stop) => stop.sna.includes(searchKey.value))
+})
+const pageFilterBikeStops = computed(() => {
+  const start = (activePage.value - 1) * perPage
+  return filterBikeStops.value.slice(start, start + 10)
+})
+
+const totalPage = computed(() => Math.ceil(filterBikeStops.value.length / perPage))
+const pagination = computed(() => {
+  const pagesToShow = 10
+  let start = Math.max(activePage.value - Math.floor(pagesToShow / 2), 1)
+  let end = Math.min(start + pagesToShow - 1, totalPage.value)
+
+  start = Math.max(end - pagesToShow + 1, 1)
+
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
 
 const timeFormat = (val) => {
   // 時間格式
-  const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
-  return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
-};
+  const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/
+  return val.replace(pattern, '$1/$2/$3 $4:$5:$6')
+}
+
+const changePage = (type) => {
+  if (type === 'forward' && activePage.value !== 1) {
+    activePage.value --
+  } 
+  if (type === 'backward' && activePage.value !== totalPage.value) {
+    activePage.value ++
+  }
+}
+
+watch(searchKey, () => {
+  activePage.value = 1
+})
 </script>
 
 <template>  
@@ -31,7 +70,7 @@ const timeFormat = (val) => {
   <div class="my-4">
     <p class="my-4 pl-2">
       站點名稱搜尋: 
-      <input type="text" class="border w-60 p-1 ml-2">
+      <input v-model="searchKey" type="text" class="border w-60 p-1 ml-2">
     </p>
     
     <table class="table table-striped">
@@ -52,7 +91,7 @@ const timeFormat = (val) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
+        <tr v-for="(s, idx) in pageFilterBikeStops" :key="s.sno">
           <td>{{ idx +1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
@@ -64,49 +103,28 @@ const timeFormat = (val) => {
     </table>
     
     <!-- 頁籤 -->
-    <ul class="my-4 flex justify-center">
-      <li class="page-item cursor-pointer">
+    <ul v-if="totalPage > 1" class="my-4 flex justify-center">
+      <li class="page-item cursor-pointer" @click="activePage = 1">
         <span class="page-link">第一頁</span>
       </li>
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="changePage('forward')">
         <span class="page-link">&lt;</span>
       </li>
 
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
+      <li 
+        v-for="number in pagination" 
+        :key="number"
+        class="page-item cursor-pointer" 
+        :class="{ 'active': activePage === number }"
+        @click="activePage = number"
+      >
+        <span class="page-link">{{ number }}</span>
       </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
-      </li>
-
-      <li class="page-item cursor-pointer">
+      
+      <li class="page-item cursor-pointer" @click="changePage('backward')">
         <span class="page-link" href>&gt;</span>
       </li>      
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="activePage = totalPage">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
