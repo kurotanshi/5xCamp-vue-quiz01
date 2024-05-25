@@ -22,12 +22,11 @@ onMounted(async () => {
   const data = await fetchUBikeData()
   uBikeStops.value = data
 })
-const totalPages = computed(() => Math.round(uBikeStops.value.length / pageSize))
 
 
 const filterData = computed(() => {
   if(searchInput.value) {
-    return uBikeStops.value.filter(people => people.sna.includes(searchInput.value))
+    return uBikeStops.value.filter(uBikeStop => uBikeStop.sna.includes(searchInput.value))
   } else {
     return uBikeStops.value
   }
@@ -36,8 +35,10 @@ const filterData = computed(() => {
 const resultData = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = currentPage.value * pageSize
+  console.log(currentPage.value, (currentPage.value - 1) * pageSize);
   return filterData.value.slice(start, end)
 })
+const totalPages = computed(() => Math.ceil(filterData.value.length / pageSize))
 
 const timeFormat = (val) => {
   // 時間格式
@@ -66,13 +67,11 @@ const changePage = (page) => {
     currentPage.value = 1
     return
   }
-
-  if(page >= totalPages.value) {
+  if(page > totalPages.value) {
     currentPage.value = totalPages.value
     return
   }
   currentPage.value = page
-
 }
 
 watch(searchInput, () => changePage(1))
