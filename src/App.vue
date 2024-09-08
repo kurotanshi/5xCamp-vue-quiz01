@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 const uBikeStops = ref([]);
+const pageSize = ref(10);
+const search = ref('');
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -11,13 +13,12 @@ const uBikeStops = ref([]);
 // lat：緯度、 lng：經度、 ar：地(中文)、 sareaen：場站區域(英文)、
 // snaen：場站名稱(英文)、 aren：地址(英文)、 bemp：空位數量、 act：全站禁用狀態
 
-const pageSize = ref(10);
 // page: 頁碼, size: 每頁筆數, 全部 349 筆.
 function fetchData() {
   fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=${pageSize.value}`)
   .then(res => res.text())
   .then(data => {
-    uBikeStops.value = JSON.parse(data);
+    uBikeStops.value = JSON.parse(data).filter(s => s.sna.includes(search.value));
   });
 }
 fetchData();
@@ -32,6 +33,9 @@ watch(pageSize, () => {
   fetchData();
 });
 
+watch(search, () => {
+  fetchData();
+});
 </script>
 
 <template>
@@ -45,7 +49,7 @@ watch(pageSize, () => {
   <div class="">
     <div class="grid grid-cols-2 my-4 px-4 w-full mx-auto">
       <div class="pl-2">
-        目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2">
+        目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2" v-model="search">
       </div>
       <div class="pl-2">
         每頁顯示筆數:
@@ -53,6 +57,7 @@ watch(pageSize, () => {
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="30">30</option>
+          <option value="999">全部</option>
         </select>
       </div>
     </div>
