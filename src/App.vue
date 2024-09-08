@@ -1,8 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue';
 const uBikeStops = ref([]);
-const pageSize = ref(10);
 const search = ref('');
+const totalPage = 349;
+const currentPage = ref(1);
+const pageSize = ref(10);
+const maxPageSize = ref(Math.ceil(totalPage/pageSize.value));
+const pageList = ref([1,2,3,4,5]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -15,7 +19,7 @@ const search = ref('');
 
 // page: 頁碼, size: 每頁筆數, 全部 349 筆.
 function fetchData() {
-  fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=${pageSize.value}`)
+  fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=${currentPage.value}&size=${pageSize.value}`)
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data).filter(s => s.sna.includes(search.value));
@@ -29,13 +33,18 @@ const timeFormat = (val) => {
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
 
-watch(pageSize, () => {
+watch([pageSize, search, currentPage], () => {
+  maxPageSize.value = Math.ceil(totalPage/pageSize.value);
+  if (currentPage.value <= 3) {
+    pageList.value = [1,2,3,4,5];
+  } else if (currentPage.value > maxPageSize.value - 3) {
+    pageList.value = [maxPageSize.value - 4, maxPageSize.value - 3, maxPageSize.value - 2, maxPageSize.value - 1, maxPageSize.value];
+  } else {
+    pageList.value = [currentPage.value - 2, currentPage.value - 1, currentPage.value, currentPage.value + 1, currentPage.value + 2];
+  }
   fetchData();
 });
 
-watch(search, () => {
-  fetchData();
-});
 </script>
 
 <template>
@@ -61,7 +70,27 @@ watch(search, () => {
         </select>
       </div>
     </div>
-
+    <span>目前頁數: {{ currentPage }}，總頁數: {{ maxPageSize }}</span>
+    <br>
+    <ul class="my-4 flex justify-center">
+      <li class="page-item cursor-pointer" @click="currentPage = 1">
+        <span class="page-link">第一頁</span>
+      </li>
+      <li v-if="currentPage > 1" class="page-item cursor-pointer" @click="currentPage--">
+        <span class="page-link">&lt;</span>
+      </li>
+      <template v-for="i in pageList" :key="i">
+        <li class="page-item cursor-pointer" :class="{'active': currentPage === i}" @click="currentPage = i">
+          <span class="page-link">{{ i }}</span>
+        </li>
+      </template>
+      <li v-if="currentPage < maxPageSize" class="page-item cursor-pointer" @click="currentPage++">
+        <span class="page-link" href>&gt;</span>
+      </li>
+      <li class="page-item cursor-pointer" @click="currentPage = maxPageSize">
+        <span class="page-link">最末頁</span>
+      </li>
+    </ul>
 
     <table class="table table-striped">
       <thead>
@@ -91,54 +120,6 @@ watch(search, () => {
         </tr>
       </tbody>
     </table>
-
-    <!-- 頁籤 -->
-    <ul class="my-4 flex justify-center">
-      <li class="page-item cursor-pointer">
-        <span class="page-link">第一頁</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">&lt;</span>
-      </li>
-
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
-      </li>
-
-      <li class="page-item cursor-pointer">
-        <span class="page-link" href>&gt;</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">最末頁</span>
-      </li>
-    </ul>
 
   </div>
 </template>
