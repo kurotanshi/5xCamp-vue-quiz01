@@ -51,7 +51,58 @@ const timeFormat = (val) => {
 };
 
 // --- Search
+const searchInput = ref("");
+const filterUBikeStops = ref([]);
+let emptyInput = true;
+watch(searchInput, (newSearch)=>{
+  filterUBikeStops.value = uBikeStops.value.filter((word)=>{
+      // word.sna.match(new RegExp(newSearch, 'i'));
+      if(searchInput.value) {return word.sna.match(newSearch)}
+      // return word.sna.includes('智慧')
+  })
+  emptyInput = !emptyInput;
+})
 
+const cartSortUp = ()=>{
+  if(filterUBikeStops){
+    filterUBikeStops.value.sort((a, b)=>{
+      return a.sbi - b.sbi
+    })
+  }
+  uBikeStops.value.sort((a, b)=>{
+    return a.sbi - b.sbi
+  })
+}
+const cartSortDown = ()=>{
+  if(filterUBikeStops){
+    filterUBikeStops.value.sort((a, b)=>{
+      return b.sbi - a.sbi
+    })
+  }
+  uBikeStops.value.sort((a, b)=>{
+    return b.sbi - a.sbi
+  })
+}
+const parkinglotSortUp = ()=>{
+  if(filterUBikeStops){
+    filterUBikeStops.value.sort((a, b)=>{
+      return a.tot - b.tot
+    })
+  }
+  uBikeStops.value.sort((a, b)=>{
+    return a.tot - b.tot
+  })
+}
+const parkinglotSortDown = ()=>{
+  if(filterUBikeStops){
+    filterUBikeStops.value.sort((a, b)=>{
+      return b.tot - a.tot
+    })
+  }
+  uBikeStops.value.sort((a, b)=>{
+    return b.tot - a.tot
+  })
+}
 
 
 
@@ -68,7 +119,7 @@ const timeFormat = (val) => {
   <div class="">
     <div class="grid grid-cols-2 my-4 px-4 w-full mx-auto">
       <div class="pl-2">
-        目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2">
+        目前頁面的站點名稱搜尋: <input v-model="searchInput" type="text" class="border w-60 p-1 ml-2">
       </div>
       <div class="pl-2">
         每頁顯示筆數:
@@ -91,25 +142,37 @@ const timeFormat = (val) => {
           <th>場站名稱</th>
           <th>場站區域</th>
           <th>目前可用車輛
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            <i @click="cartSortUp" class="fa fa-sort-asc btn btn-primary mx-1" aria-hidden="true"></i>
+            <i @click="cartSortDown" class="fa fa-sort-desc btn btn-primary mx-1" aria-hidden="true"></i>
           </th>
           <th>總停車格
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            <i @click="parkinglotSortUp" class="fa fa-sort-asc btn btn-primary mx-1" aria-hidden="true"></i>
+            <i @click="parkinglotSortDown" class="fa fa-sort-desc btn btn-primary mx-1" aria-hidden="true"></i>
           </th>
           <th>資料更新時間</th>          
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
-          <td>{{ idx +1 }}</td>
-          <td>{{ s.sna }}</td>
-          <td>{{ s.sarea }}</td>
-          <td>{{ s.sbi }}</td>
-          <td>{{ s.tot }}</td>
-          <td>{{ timeFormat(s.mday) }}</td>
-        </tr>
+        <template v-if="emptyInput">
+          <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
+            <td>{{ idx +1 }}</td>
+            <td>{{ s.sna }}</td>
+            <td>{{ s.sarea }}</td>
+            <td>{{ s.sbi }}</td>
+            <td>{{ s.tot }}</td>
+            <td>{{ timeFormat(s.mday) }}</td>
+          </tr>
+        </template>
+        <template v-else>
+          <tr v-for="(s, idx) in filterUBikeStops" :key="s.sno">
+            <td>{{ idx +1 }}</td>
+            <td>{{ s.sna }}</td>
+            <td>{{ s.sarea }}</td>
+            <td>{{ s.sbi }}</td>
+            <td>{{ s.tot }}</td>
+            <td>{{ timeFormat(s.mday) }}</td>
+          </tr>
+        </template>
       </tbody>
     </table>
     
