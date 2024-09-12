@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 const uBikeStops = ref([]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
@@ -12,17 +12,49 @@ const uBikeStops = ref([]);
 // snaen：場站名稱(英文)、 aren：地址(英文)、 bemp：空位數量、 act：全站禁用狀態
 
 // page: 頁碼, size: 每頁筆數, 全部 349 筆.
-fetch('https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=999')
+
+//每頁顯示
+let everyPageItems = ref(10);
+// 所有比數
+let itemsNum = ref(34);
+// 所有頁數
+let pagesTotal = computed({
+  get(){
+    return Math.ceil( itemsNum.value / everyPageItems.value)
+  }
+});
+console.log('pagesTotal', pagesTotal.value)
+
+// 一開始頁
+fetch('https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=10')
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data);
-  });
+});
+
+// 觀察在哪一頁
+const WatchNowPage = (i)=>{
+  let n = everyPageItems.value;
+  fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=${i}&size=${n}`)
+    .then(res => res.text())
+    .then(data => {
+      uBikeStops.value = JSON.parse(data);
+    });
+  // console.log(i)
+}
+// console.log('everyPageItems',everyPageItems.value , 'itemsNum', itemsNum.value, "pagesTotal", pagesTotal.value)
 
 const timeFormat = (val) => {
   // 時間格式
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
+
+// --- Search
+
+
+
+
 </script>
 
 <template>  
@@ -39,12 +71,15 @@ const timeFormat = (val) => {
         目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2">
       </div>
       <div class="pl-2">
-        每頁顯示筆數: 
-        <select class="border w-20 p-1 ml-2">
+        每頁顯示筆數:
+        <select class="border w-20 p-1 ml-2" v-model="everyPageItems">
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="30">30</option>
         </select>
+
+
+      {{ everyPageItems }}
       </div>
     </div>
 
@@ -87,36 +122,13 @@ const timeFormat = (val) => {
         <span class="page-link">&lt;</span>
       </li>
 
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
+      <li
+      v-for="i in pagesTotal"
+      @click.lazy="WatchNowPage(i)"
+      class="page-item cursor-pointer">
+        <span class="page-link">{{ i }}</span>
       </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
-      </li>
+      <!-- :class="{active: i === nowPage}" -->
 
       <li class="page-item cursor-pointer">
         <span class="page-link" href>&gt;</span>
