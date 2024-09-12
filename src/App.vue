@@ -1,6 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import {computed, ref, watch} from 'vue';
 const uBikeStops = ref([]);
+const searchKey = ref('');
+const sortedKey = ref('');
+const sortedType = ref('asc');
+const rawPerPage = ref(10);
+const currentPage = ref(1);
+const filteredStops = ref([]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -23,6 +29,56 @@ const timeFormat = (val) => {
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
+
+const setSortedKeyAndType = (key, type) => {
+  console.log('key', 'type', key, type);
+  sortedKey.value = key;
+  sortedType.value = type;
+};
+
+const handledStops = computed(() => {
+  let outputStops = [];
+  filteredStops.value = uBikeStops.value.filter(s => s.sna.includes(searchKey.value));
+  outputStops = filteredStops.value;
+  
+  if (sortedKey.value !== '') {
+    outputStops = filteredStops.value.sort((a, b) => {
+      if (sortedType.value === 'desc') {
+        return b[sortedKey.value] - a[sortedKey.value];
+      }
+      return a[sortedKey.value] - b[sortedKey.value];
+    });
+  }
+   return outputStops.slice((currentPage.value-1)*(rawPerPage.value), (currentPage.value)*(rawPerPage.value));
+});
+
+const resetCurrentPageByChangeRawPerPage = watch(() => rawPerPage.value, () => {
+  currentPage.value = 1;
+});
+
+const resetCurrentPageByChangeSearchKey = watch(() => searchKey.value, () => {
+  currentPage.value = 1;
+});
+
+const totalPageCount = computed(() => {
+  return Math.ceil(filteredStops.value.length / rawPerPage.value);
+});
+
+const setPage = (page) => {
+  currentPage.value = page;
+};
+
+const lastPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value -= 1;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPageCount.value) {
+    currentPage.value += 1;
+  }
+};
 </script>
 
 <template>  
@@ -36,11 +92,11 @@ const timeFormat = (val) => {
   <div class="">
     <div class="grid grid-cols-2 my-4 px-4 w-full mx-auto">
       <div class="pl-2">
-        目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2">
+        目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2" v-model="searchKey">
       </div>
       <div class="pl-2">
         每頁顯示筆數: 
-        <select class="border w-20 p-1 ml-2">
+        <select class="border w-20 p-1 ml-2" v-model="rawPerPage">
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="30">30</option>
@@ -56,18 +112,18 @@ const timeFormat = (val) => {
           <th>場站名稱</th>
           <th>場站區域</th>
           <th>目前可用車輛
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            <i class="fa fa-sort-asc cursor-pointer" aria-hidden="true" v-on:click="setSortedKeyAndType('sbi', 'asc')"></i>
+            <i class="fa fa-sort-desc cursor-pointer" aria-hidden="true" v-on:click="setSortedKeyAndType('sbi', 'desc')"></i>
           </th>
           <th>總停車格
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            <i class="fa fa-sort-asc cursor-pointer" aria-hidden="true" v-on:click="setSortedKeyAndType('tot', 'asc')"></i>
+            <i class="fa fa-sort-desc cursor-pointer" aria-hidden="true" v-on:click="setSortedKeyAndType('tot', 'desc')"></i>
           </th>
           <th>資料更新時間</th>          
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
+        <tr v-for="(s, idx) in handledStops" :key="s.sno">
           <td>{{ idx +1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
@@ -81,48 +137,21 @@ const timeFormat = (val) => {
     <!-- 頁籤 -->
     <ul class="my-4 flex justify-center">
       <li class="page-item cursor-pointer">
-        <span class="page-link">第一頁</span>
+        <span class="page-link" v-on:click="setPage(1)">第一頁</span>
       </li>
       <li class="page-item cursor-pointer">
-        <span class="page-link">&lt;</span>
+        <span class="page-link" v-on:click="lastPage">&lt;</span>
       </li>
-
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
+      <li class="page-item cursor-pointer" 
+          v-for="(s, idx) in totalPageCount" 
+          :class="{ active: currentPage === idx + 1 }">
+        <span class="page-link" v-on:click="setPage(idx+1)">{{idx+1}}</span>
       </li>
       <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
-      </li>
-
-      <li class="page-item cursor-pointer">
-        <span class="page-link" href>&gt;</span>
+        <span class="page-link" href v-on:click="nextPage">&gt;</span>
       </li>      
       <li class="page-item cursor-pointer">
-        <span class="page-link">最末頁</span>
+        <span class="page-link" v-on:click="setPage(totalPageCount)">最末頁</span>
       </li>
     </ul>
 
