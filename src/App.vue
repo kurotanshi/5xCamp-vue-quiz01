@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue';
+import {ref, watchEffect} from 'vue';
 const uBikeStops = ref([]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
@@ -24,29 +24,25 @@ const timeFormat = (val) => {
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
 
-//implement filter search
-const search = ref('');
-const filteredStops = computed(() => {
-  let filter = uBikeStops.value.filter(s => s.sna.includes(search.value));
-  // console.log("filter:",filter)
-  return filter;
-});
 
 const sortField = ref(null);
 const sortDirection = ref(null);
+const stops = ref([]);
+const search = ref('');
 
-const sortedStops = computed(() => {
-  let stops = filteredStops.value.slice();
+watchEffect(() => {
+  let filteredStops = uBikeStops.value.filter(s => s.sna.includes(search.value));
+
   if (sortField.value) {
-    stops.sort((a, b) => {
+    filteredStops.sort((a, b) => {
       if (a[sortField.value] < b[sortField.value]) return sortDirection.value === 'asc' ? -1 : 1;
       if (a[sortField.value] > b[sortField.value]) return sortDirection.value === 'asc' ? 1 : -1;
       return 0;
     });
   }
-  return stops;
-});
 
+  stops.value = filteredStops;
+});
 </script>
 
 <template>
@@ -93,7 +89,7 @@ const sortedStops = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in sortedStops" :key="s.sno">
+        <tr v-for="(s, idx) in stops" :key="s.sno">
           <td>{{ idx +1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
