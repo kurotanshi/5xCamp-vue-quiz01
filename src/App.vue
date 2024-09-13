@@ -24,6 +24,18 @@ watchEffect(() => {
       });
 });
 
+const incrementPage = () => {
+  if (page.value < maxPage) {
+    page.value += 1;
+  }
+};
+
+const decrementPage = () => {
+  if (page.value > 1) {
+    page.value -= 1;
+  }
+};
+
 const timeFormat = (val) => {
   // 時間格式
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
@@ -111,7 +123,7 @@ watchEffect(() => {
       <li class="page-item cursor-pointer" @click="page = 1">
         <span class="page-link">第一頁</span>
       </li>
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="decrementPage">
         <span class="page-link">&lt;</span>
       </li>
 
@@ -119,7 +131,7 @@ watchEffect(() => {
         <span class="page-link">{{ i }}</span>
       </li>
 
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="incrementPage">
         <span class="page-link" href>&gt;</span>
       </li>
       <li class="page-item cursor-pointer" @click="page= maxPage">
