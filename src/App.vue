@@ -13,6 +13,8 @@ const uBikeStops = ref([]);
 
 // page: 頁碼, size: 每頁筆數, 全部 349 筆.
 
+const maxPage = 10;
+const totalPages = Array.from({length: maxPage}, (_, i) => i + 1);
 const page = ref(1);
 watchEffect(() => {
   fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=${page.value}&size=40`)
@@ -113,41 +115,14 @@ watchEffect(() => {
         <span class="page-link">&lt;</span>
       </li>
 
-      <li class="page-item cursor-pointer active" @click="page = 1">
-        <span class="page-link">1</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page= 2">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 3">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 4">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 5">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 6">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 7">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 8">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 9">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer" @click="page.value= 10">
-        <span class="page-link">10</span>
+      <li class="page-item cursor-pointer" v-for="i in totalPages" :key="i" @click="page = i" :class="{ active: page === i }">
+        <span class="page-link">{{ i }}</span>
       </li>
 
       <li class="page-item cursor-pointer">
         <span class="page-link" href>&gt;</span>
       </li>
-      <li class="page-item cursor-pointer" @click="page.value= 10">
+      <li class="page-item cursor-pointer" @click="page= maxPage">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
