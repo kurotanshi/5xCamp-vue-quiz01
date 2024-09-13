@@ -32,6 +32,21 @@ const filteredStops = computed(() => {
   return filter;
 });
 
+const sortField = ref(null);
+const sortDirection = ref(null);
+
+const sortedStops = computed(() => {
+  let stops = filteredStops.value.slice();
+  if (sortField.value) {
+    stops.sort((a, b) => {
+      if (a[sortField.value] < b[sortField.value]) return sortDirection.value === 'asc' ? -1 : 1;
+      if (a[sortField.value] > b[sortField.value]) return sortDirection.value === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+  return stops;
+});
+
 </script>
 
 <template>
@@ -64,19 +79,21 @@ const filteredStops = computed(() => {
           <th class="w-12">#</th>
           <th>場站名稱</th>
           <th>場站區域</th>
-          <th>目前可用車輛
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+          <th>
+            目前可用車輛
+            <i class="fa fa-sort-asc" aria-hidden="true" @click="sortField = 'sbi'; sortDirection = 'asc'"></i>
+            <i class="fa fa-sort-desc" aria-hidden="true" @click="sortField = 'sbi'; sortDirection = 'desc'"></i>
           </th>
-          <th>總停車格
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+          <th>
+            總停車格
+            <i class="fa fa-sort-asc" aria-hidden="true" @click="sortField = 'tot'; sortDirection = 'asc'"></i>
+            <i class="fa fa-sort-desc" aria-hidden="true" @click="sortField = 'tot'; sortDirection = 'desc'"></i>
           </th>
           <th>資料更新時間</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in filteredStops" :key="s.sno">
+        <tr v-for="(s, idx) in sortedStops" :key="s.sno">
           <td>{{ idx +1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
