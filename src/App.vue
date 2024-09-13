@@ -14,16 +14,13 @@ const uBikeStops = ref([]);
 // page: 頁碼, size: 每頁筆數, 全部 349 筆.
 
 //每頁顯示
-let everyPageItems = ref(10);
+const itemPerPage = ref(10);
 // 所有比數
-let itemsNum = ref(34);
+const itemsNum = 349;
 // 所有頁數
-let pagesTotal = computed({
-  get(){
-    return Math.ceil( itemsNum.value / everyPageItems.value)
-  }
+const pagesTotal = computed(()=>{
+  return Math.ceil( itemsNum / itemPerPage.value)
 });
-console.log('pagesTotal', pagesTotal.value)
 
 // 一開始頁
 fetch('https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=10')
@@ -32,17 +29,26 @@ fetch('https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c
     uBikeStops.value = JSON.parse(data);
 });
 
+const nowPage = ref(1);
+
 // 觀察在哪一頁
 const WatchNowPage = (i)=>{
-  let n = everyPageItems.value;
+  let n = itemPerPage.value;
+  nowPage.value = i;
   fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=${i}&size=${n}`)
     .then(res => res.text())
     .then(data => {
       uBikeStops.value = JSON.parse(data);
     });
-  // console.log(i)
+  watch(itemPerPage, ()=>{
+    fetch(`https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=${i}&size=${n}`)
+    .then(res => res.text())
+    .then(data => {
+      uBikeStops.value = JSON.parse(data);
+    });
+  })  
 }
-// console.log('everyPageItems',everyPageItems.value , 'itemsNum', itemsNum.value, "pagesTotal", pagesTotal.value)
+
 
 const timeFormat = (val) => {
   // 時間格式
@@ -51,16 +57,16 @@ const timeFormat = (val) => {
 };
 
 // --- Search
-const searchInput = ref("");
+const searchQuery = ref("");
 const filterUBikeStops = ref([]);
-let emptyInput = true;
-watch(searchInput, (newSearch)=>{
+let isEmpty = true;
+watch(searchQuery, (newSearch)=>{
   filterUBikeStops.value = uBikeStops.value.filter((word)=>{
       // word.sna.match(new RegExp(newSearch, 'i'));
-      if(searchInput.value) {return word.sna.match(newSearch)}
+      if(searchQuery.value) {return word.sna.match(newSearch)}
       // return word.sna.includes('智慧')
   })
-  emptyInput = !emptyInput;
+  isEmpty = !isEmpty;
 })
 
 const cartSortUp = ()=>{
@@ -124,18 +130,15 @@ const parkinglotSortDown = ()=>{
   <div class="">
     <div class="grid grid-cols-2 my-4 px-4 w-full mx-auto">
       <div class="pl-2">
-        目前頁面的站點名稱搜尋: <input v-model="searchInput" type="text" class="border w-60 p-1 ml-2">
+        目前頁面的站點名稱搜尋: <input v-model="searchQuery" type="text" class="border w-60 p-1 ml-2">
       </div>
       <div class="pl-2">
         每頁顯示筆數:
-        <select class="border w-20 p-1 ml-2" v-model="everyPageItems">
+        <select class="border w-20 p-1 ml-2" v-model="itemPerPage">
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="30">30</option>
         </select>
-
-
-      {{ everyPageItems }}
       </div>
     </div>
 
@@ -158,7 +161,7 @@ const parkinglotSortDown = ()=>{
         </tr>
       </thead>
       <tbody>
-        <template v-if="emptyInput">
+        <template v-if="isEmpty">
           <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
             <td>{{ idx +1 }}</td>
             <td>{{ s.sna }}</td>
@@ -182,7 +185,7 @@ const parkinglotSortDown = ()=>{
     </table>
     
     <!-- 頁籤 -->
-    <ul class="my-4 flex justify-center">
+    <ul class="my-4 flex justify-center pagination">
       <li class="page-item cursor-pointer">
         <span class="page-link">第一頁</span>
       </li>
@@ -191,12 +194,12 @@ const parkinglotSortDown = ()=>{
       </li>
 
       <li
+      :class="{active: i === nowPage}"
       v-for="i in pagesTotal"
       @click.lazy="WatchNowPage(i)"
       class="page-item cursor-pointer">
         <span class="page-link">{{ i }}</span>
       </li>
-      <!-- :class="{active: i === nowPage}" -->
 
       <li class="page-item cursor-pointer">
         <span class="page-link" href>&gt;</span>
@@ -208,3 +211,12 @@ const parkinglotSortDown = ()=>{
 
   </div>
 </template>
+
+<style>
+.pagination {
+  flex-wrap: wrap;
+  max-width: 1000px;
+  width: 100%;
+  margin: auto;
+}
+</style>
