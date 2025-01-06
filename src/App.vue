@@ -42,7 +42,15 @@ const filteruBikeStops = computed(() => {
   return ret;
 });
 
-const pageCount = ref(10);
+const pageSize = ref(10);
+const currentPage = ref(3);
+const paginatedStops = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteruBikeStops.value.slice(start, end);
+});
+
+const tabPageCount = ref(10);
 </script>
 
 <template>  
@@ -58,10 +66,12 @@ const pageCount = ref(10);
       <div class="pl-2">
         目前頁面的站點名稱搜尋:
         <input type="text" v-model="search" class="border w-60 p-1 ml-2" />
+        <input type="text" v-model="pageSize" class="border w-60 p-1 ml-2" />
+        <input type="text" v-model="currentPage" class="border w-60 p-1 ml-2" />
       </div>
       <div class="pl-2">
         每頁顯示筆數:
-        <select class="border w-20 p-1 ml-2" v-model="pageCount">
+        <select class="border w-20 p-1 ml-2" v-model="pageSize">
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="30">30</option>
@@ -101,7 +111,7 @@ const pageCount = ref(10);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in filteruBikeStops" :key="s.sno">
+        <tr v-for="(s, idx) in paginatedStops" :key="s.sno">
           <td>{{ idx + 1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
@@ -111,54 +121,39 @@ const pageCount = ref(10);
         </tr>
       </tbody>
     </table>
-    
+
     <!-- 頁籤 -->
     <ul class="my-4 flex justify-center">
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="currentPage = 1">
         <span class="page-link">第一頁</span>
       </li>
-      <li class="page-item cursor-pointer">
+      <li
+        class="page-item cursor-pointer"
+        @click="if (currentPage > 0) currentPage--;">
         <span class="page-link">&lt;</span>
       </li>
 
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
+      <li
+        v-for="i in tabPageCount"
+        :key="i"
+        class="page-item cursor-pointer"
+        :class="{ active: currentPage === i }"
+        @click="currentPage = i">
+        <span class="page-link">{{ i }}</span>
       </li>
 
-      <li class="page-item cursor-pointer">
+      <li
+        class="page-item cursor-pointer"
+        @click="
+          if (currentPage < filteruBikeStops.length / pageSize) currentPage++;
+        ">
         <span class="page-link" href>&gt;</span>
-      </li>      
-      <li class="page-item cursor-pointer">
+      </li>
+      <li
+        class="page-item cursor-pointer"
+        @click="currentPage = Math.floor(filteruBikeStops.length / pageSize)">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
-
   </div>
 </template>
