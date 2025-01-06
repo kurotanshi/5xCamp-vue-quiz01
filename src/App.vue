@@ -43,7 +43,11 @@ const filteruBikeStops = computed(() => {
 });
 
 const pageSize = ref(10);
-const currentPage = ref(3);
+const currentPage = ref(1);
+const lastPage = computed(() =>
+  Math.ceil(filteruBikeStops.value.length / pageSize.value)
+);
+
 const paginatedStops = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
   const end = start + pageSize.value;
@@ -51,6 +55,23 @@ const paginatedStops = computed(() => {
 });
 
 const tabPageCount = ref(10);
+const visiblePages = computed(() => {
+  const range = Math.floor(tabPageCount.value / 2); // Range for pages before and after
+  let start = currentPage.value - range;
+  let end = currentPage.value + range - 1;
+  console.log("ini", start, end, tabPageCount.value, lastPage.value);
+
+  // Adjust the start and end to ensure they stay within valid bounds
+  if (start < 1) {
+    start = 1;
+    end = Math.min(start + tabPageCount.value, lastPage.value); // Ensure `end` doesn't exceed total pages
+  } else if (end > lastPage.value) {
+    end = lastPage.value;
+    start = Math.max(1, end - tabPageCount.value); // Ensure `start` doesn't go below 1
+  }
+  console.log("res", start, end);
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+});
 </script>
 
 <template>  
@@ -129,12 +150,12 @@ const tabPageCount = ref(10);
       </li>
       <li
         class="page-item cursor-pointer"
-        @click="if (currentPage > 0) currentPage--;">
+        @click="if (currentPage > 1) currentPage--;">
         <span class="page-link">&lt;</span>
       </li>
 
       <li
-        v-for="i in tabPageCount"
+        v-for="i in visiblePages"
         :key="i"
         class="page-item cursor-pointer"
         :class="{ active: currentPage === i }"
@@ -144,14 +165,10 @@ const tabPageCount = ref(10);
 
       <li
         class="page-item cursor-pointer"
-        @click="
-          if (currentPage < filteruBikeStops.length / pageSize) currentPage++;
-        ">
+        @click="if (currentPage < lastPage) currentPage++;">
         <span class="page-link" href>&gt;</span>
       </li>
-      <li
-        class="page-item cursor-pointer"
-        @click="currentPage = Math.floor(filteruBikeStops.length / pageSize)">
+      <li class="page-item cursor-pointer" @click="currentPage = lastPage">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
