@@ -12,7 +12,7 @@ const uBikeStops = ref([]);
 // snaen：場站名稱(英文)、 aren：地址(英文)、 bemp：空位數量、 act：全站禁用狀態
 
 // page: 頁碼, size: 每頁筆數, 全部 349 筆.
-fetch('https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=999')
+fetch('/api/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=999')
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data);
