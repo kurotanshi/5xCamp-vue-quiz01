@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch } from "vue";
 const uBikeStops = ref([]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
@@ -23,6 +23,60 @@ const timeFormat = (val) => {
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
+
+const search = ref("");
+const isDescSbi = ref(true);
+const isDescTot = ref(true);
+const currentSortField = ref(null); // 当前排序字段，'sbi' 或 'tot'
+
+const filteruBikeStops = computed(() => {
+  let ret = uBikeStops.value.filter((stop) =>
+    stop.sna.toLowerCase().includes(search.value.toLowerCase())
+  );
+
+  if (currentSortField.value === "sbi") {
+    ret = ret.sort((a, b) => (isDescSbi.value ? b.sbi - a.sbi : a.sbi - b.sbi));
+  } else if (currentSortField.value === "tot") {
+    ret = ret.sort((a, b) => (isDescTot.value ? b.tot - a.tot : a.tot - b.tot));
+  }
+  return ret;
+});
+
+const pageSize = ref(10);
+const currentPage = ref(1);
+
+watch(pageSize, (newValue, oldValue) => {
+  currentPage.value = Math.ceil((currentPage.value * oldValue) / newValue);
+});
+
+const lastPage = computed(() =>
+  Math.ceil(filteruBikeStops.value.length / pageSize.value)
+);
+
+const paginatedStops = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteruBikeStops.value.slice(start, end);
+});
+
+const tabPageCount = ref(10);
+const visiblePages = computed(() => {
+  const range = Math.floor(tabPageCount.value / 2); // Range for pages before and after
+  let start = currentPage.value - range;
+  let end = currentPage.value + range - 1;
+  console.log("ini", start, end, tabPageCount.value, lastPage.value);
+
+  // Adjust the start and end to ensure they stay within valid bounds
+  if (start < 1) {
+    start = 1;
+    end = Math.min(start + tabPageCount.value, lastPage.value); // Ensure `end` doesn't exceed total pages
+  } else if (end > lastPage.value) {
+    end = lastPage.value;
+    start = Math.max(1, end - tabPageCount.value); // Ensure `start` doesn't go below 1
+  }
+  console.log("res", start, end);
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+});
 </script>
 
 <template>  
@@ -36,11 +90,14 @@ const timeFormat = (val) => {
   <div class="">
     <div class="grid grid-cols-2 my-4 px-4 w-full mx-auto">
       <div class="pl-2">
-        目前頁面的站點名稱搜尋: <input type="text" class="border w-60 p-1 ml-2">
+        目前頁面的站點名稱搜尋:
+        <input type="text" v-model="search" class="border w-60 p-1 ml-2" />
+        <input type="text" v-model="pageSize" class="border w-60 p-1 ml-2" />
+        <input type="text" v-model="currentPage" class="border w-60 p-1 ml-2" />
       </div>
       <div class="pl-2">
-        每頁顯示筆數: 
-        <select class="border w-20 p-1 ml-2">
+        每頁顯示筆數:
+        <select class="border w-20 p-1 ml-2" v-model="pageSize">
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="30">30</option>
@@ -48,27 +105,40 @@ const timeFormat = (val) => {
       </div>
     </div>
 
-    
     <table class="table table-striped">
       <thead>
         <tr>
           <th class="w-12">#</th>
           <th>場站名稱</th>
           <th>場站區域</th>
-          <th>目前可用車輛
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+          <th
+            >目前可用車輛
+            <button
+              @click="
+                isDescSbi = !isDescSbi;
+                currentSortField = 'sbi';
+              ">
+              <i class="fa fa-sort-asc" aria-hidden="true"></i>
+              <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            </button>
           </th>
-          <th>總停車格
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+          <th
+            >總停車格
+            <button
+              @click="
+                isDescTot = !isDescTot;
+                currentSortField = 'tot';
+              ">
+              <i class="fa fa-sort-asc" aria-hidden="true"></i>
+              <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            </button>
           </th>
-          <th>資料更新時間</th>          
+          <th>資料更新時間</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(s, idx) in uBikeStops" :key="s.sno">
-          <td>{{ idx +1 }}</td>
+        <tr v-for="(s, idx) in paginatedStops" :key="s.sno">
+          <td>{{ idx + 1 }}</td>
           <td>{{ s.sna }}</td>
           <td>{{ s.sarea }}</td>
           <td>{{ s.sbi }}</td>
@@ -77,54 +147,35 @@ const timeFormat = (val) => {
         </tr>
       </tbody>
     </table>
-    
+
     <!-- 頁籤 -->
     <ul class="my-4 flex justify-center">
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="currentPage = 1">
         <span class="page-link">第一頁</span>
       </li>
-      <li class="page-item cursor-pointer">
+      <li
+        class="page-item cursor-pointer"
+        @click="if (currentPage > 1) currentPage--;">
         <span class="page-link">&lt;</span>
       </li>
 
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
+      <li
+        v-for="i in visiblePages"
+        :key="i"
+        class="page-item cursor-pointer"
+        :class="{ active: currentPage === i }"
+        @click="currentPage = i">
+        <span class="page-link">{{ i }}</span>
       </li>
 
-      <li class="page-item cursor-pointer">
+      <li
+        class="page-item cursor-pointer"
+        @click="if (currentPage < lastPage) currentPage++;">
         <span class="page-link" href>&gt;</span>
-      </li>      
-      <li class="page-item cursor-pointer">
+      </li>
+      <li class="page-item cursor-pointer" @click="currentPage = lastPage">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
-
   </div>
 </template>
