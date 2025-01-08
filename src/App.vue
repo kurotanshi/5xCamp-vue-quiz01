@@ -44,6 +44,14 @@ const sortCarByDesc = () => {
   result.value = result.value.sort((a, b) => b.sbi - a.sbi);
 };
 
+const sortParkingGridByAsc = () => {
+  result.value = result.value.sort((a, b) => a.tot - b.tot);
+};
+
+const sortParkingGridByDesc = () => {
+  result.value = result.value.sort((a, b) => b.tot - a.tot);
+};
+
 
 </script>
 
@@ -82,8 +90,8 @@ const sortCarByDesc = () => {
             <i class="fa fa-sort-desc" aria-hidden="true" @click="sortCarByDesc"></i>
           </th>
           <th>總停車格
-            <i class="fa fa-sort-asc" aria-hidden="true"></i>
-            <i class="fa fa-sort-desc" aria-hidden="true"></i>
+            <i class="fa fa-sort-asc" aria-hidden="true" @click="sortParkingGridByAsc"></i>
+            <i class="fa fa-sort-desc" aria-hidden="true" @click="sortParkingGridByDesc"></i>
           </th>
           <th>資料更新時間</th>          
         </tr>
