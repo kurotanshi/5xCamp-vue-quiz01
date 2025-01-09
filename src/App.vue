@@ -35,7 +35,7 @@ watch(searchText, (val) => {
 
 
 const filterBus = (type) => {
-  result.value = uBikeStops.value.filter((s) => s.sna.includes(type));
+  result.value = (uBikeStops.value.filter((s) => s.sna.includes(type))).slice(0, pageSize.value);
 };
 
 const sortCarByAsc = () => {
