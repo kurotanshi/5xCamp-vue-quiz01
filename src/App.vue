@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue';
 const uBikeStops = ref([]);
 const result = ref([]);
+const pages = [1,2,3,4,5,6,7,8,9,10];
+const currentPage = ref(1);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -63,6 +65,10 @@ const displayPage = (val) => {
   result.value = uBikeStops.value.slice(0, val);
 };
 
+const goToPage = (page) => {
+  currentPage.value = page;
+};
+
 
 
 </script>
@@ -120,48 +126,20 @@ const displayPage = (val) => {
     
     <!-- 頁籤 -->
     <ul class="my-4 flex justify-center">
-      <li class="page-item cursor-pointer">
+
+      <li class="page-item cursor-pointer" :class="{ active: currentPage === 1 }">
         <span class="page-link">第一頁</span>
       </li>
       <li class="page-item cursor-pointer">
         <span class="page-link">&lt;</span>
       </li>
-
-      <li class="page-item cursor-pointer active">
-        <span class="page-link">1</span>
+      <li v-for="page in pages" :key="page" :class="['page-item', 'cursor-pointer', { active: currentPage === page }]" @click="goToPage(page)"> 
+        <span class="page-link">{{ page }}</span>
       </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">2</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">3</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">4</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">5</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">6</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">7</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">8</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">9</span>
-      </li>
-      <li class="page-item cursor-pointer">
-        <span class="page-link">10</span>
-      </li>
-
       <li class="page-item cursor-pointer">
         <span class="page-link" href>&gt;</span>
       </li>      
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" :class="{ active: currentPage === pages.length }">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
