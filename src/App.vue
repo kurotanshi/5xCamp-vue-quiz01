@@ -1,9 +1,9 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 const uBikeStops = ref([]);
 const result = ref([]);
 const currentPage = ref(1);
-const isActive = ref(false);
+const filteredStops = ref([]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -19,12 +19,12 @@ fetch('/api/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=9
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data);
+    filteredStops.value = uBikeStops.value;
     result.value = uBikeStops.value.slice(0, pageSize.value);
-    displayPageRow(pageSize.value);
+    updatePagination();
   });
 
 const timeFormat = (val) => {
-  // 時間格式
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
 };
@@ -33,10 +33,20 @@ const searchText = ref('');
 watch(searchText, (val) => {
   filterBus(val);
 });
+const filterBus = (keyword) => {
+  filteredStops.value = uBikeStops.value.filter((s) => s.sna.includes(keyword));
+  currentPage.value = 1;
+  updatePagination();
+};
 
-
-const filterBus = (type) => {
-  result.value = (uBikeStops.value.filter((s) => s.sna.includes(type))).slice(0, pageSize.value);
+const updatePagination = () => {
+  pages.value = Math.ceil(filteredStops.value.length / pageSize.value);
+  updateResult();
+};
+const updateResult = () => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  result.value = filteredStops.value.slice(start, end);
 };
 
 const sortCarByAsc = () => {
@@ -59,29 +69,17 @@ const pageCount = [10,20,30];
 const pageSize = ref(pageCount[0]);
 
 watch(pageSize, (val) => {
-  displayResultWithPageSize(val);
-  displayPageRow(val);
-});
-
-const displayResultWithPageSize = (val) => {
-  result.value = uBikeStops.value.slice(0, val);
-};
-
-const displayPageRow = (val) => {
   currentPage.value = 1;
-  console.log('uBikeStops',uBikeStops.value.length);
-  pages.value = Math.ceil(uBikeStops.value.length / val);
-  console.log(pages.value);
-};
-
+  updatePagination();
+});
 const pages = ref([]);
 const goToPage = (page) => {
+  if (page < 1 || page > pages.value) {
+    return;
+  }
   currentPage.value = page;
+  updateResult();
 };
-
-
-
-
 
 </script>
 
