@@ -52,6 +52,18 @@ const sortParkingGridByDesc = () => {
   result.value = result.value.sort((a, b) => b.tot - a.tot);
 };
 
+const pageCount = [10,20,30];
+const pageSize = ref(pageCount[0]);
+
+watch(pageSize, (val) => {
+  displayPage(val);
+});
+
+const displayPage = (val) => {
+  result.value = uBikeStops.value.slice(0, val);
+};
+
+
 
 </script>
 
@@ -70,10 +82,8 @@ const sortParkingGridByDesc = () => {
       </div>
       <div class="pl-2">
         每頁顯示筆數: 
-        <select class="border w-20 p-1 ml-2">
-          <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="30">30</option>
+        <select class="border w-20 p-1 ml-2" v-model="pageSize">
+          <option v-for="p in pageCount" :key="p" :value="p">{{ p }}</option>
         </select>
       </div>
     </div>
