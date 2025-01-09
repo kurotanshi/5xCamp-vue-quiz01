@@ -17,7 +17,7 @@ fetch('/api/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=9
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data);
-    result.value = uBikeStops.value;
+    result.value = uBikeStops.value.slice(0, pageSize.value);
   });
 
 const timeFormat = (val) => {
