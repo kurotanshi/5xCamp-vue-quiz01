@@ -1,9 +1,9 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 const uBikeStops = ref([]);
 const result = ref([]);
-const pages = [1,2,3,4,5,6,7,8,9,10];
 const currentPage = ref(1);
+const isActive = ref(false);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -20,6 +20,7 @@ fetch('/api/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=9
   .then(data => {
     uBikeStops.value = JSON.parse(data);
     result.value = uBikeStops.value.slice(0, pageSize.value);
+    displayPageRow(pageSize.value);
   });
 
 const timeFormat = (val) => {
@@ -58,16 +59,27 @@ const pageCount = [10,20,30];
 const pageSize = ref(pageCount[0]);
 
 watch(pageSize, (val) => {
-  displayPage(val);
+  displayResultWithPageSize(val);
+  displayPageRow(val);
 });
 
-const displayPage = (val) => {
+const displayResultWithPageSize = (val) => {
   result.value = uBikeStops.value.slice(0, val);
 };
 
+const displayPageRow = (val) => {
+  currentPage.value = 1;
+  console.log('uBikeStops',uBikeStops.value.length);
+  pages.value = Math.ceil(uBikeStops.value.length / val);
+  console.log(pages.value);
+};
+
+const pages = ref([]);
 const goToPage = (page) => {
   currentPage.value = page;
 };
+
+
 
 
 
@@ -127,19 +139,19 @@ const goToPage = (page) => {
     <!-- 頁籤 -->
     <ul class="my-4 flex justify-center">
 
-      <li class="page-item cursor-pointer" :class="{ active: currentPage === 1 }">
+      <li class="page-item cursor-pointer" @click="goToPage(1)">
         <span class="page-link">第一頁</span>
       </li>
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="goToPage(currentPage - 1)">
         <span class="page-link">&lt;</span>
       </li>
       <li v-for="page in pages" :key="page" :class="['page-item', 'cursor-pointer', { active: currentPage === page }]" @click="goToPage(page)"> 
         <span class="page-link">{{ page }}</span>
       </li>
-      <li class="page-item cursor-pointer">
+      <li class="page-item cursor-pointer" @click="goToPage(currentPage + 1)">
         <span class="page-link" href>&gt;</span>
       </li>      
-      <li class="page-item cursor-pointer" :class="{ active: currentPage === pages.length }">
+      <li class="page-item cursor-pointer" @click="goToPage(pages)">
         <span class="page-link">最末頁</span>
       </li>
     </ul>
