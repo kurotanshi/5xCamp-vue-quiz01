@@ -73,7 +73,10 @@ watch(pageSize, (val) => {
   currentPage.value = 1;
   updatePagination();
 });
-const pages = ref([]);
+
+const pages = computed(() => {
+  return Math.ceil(filteredStops.value.length / pageSize.value);
+});
 const goToPage = (page) => {
   if (page < 1 || page > pages.value) {
     return;
