@@ -1,9 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue';
+import {computed, ref, watch} from 'vue';
 const uBikeStops = ref([]);
 const result = ref([]);
 const currentPage = ref(1);
-const filteredStops = ref([]);
 
 // 資料來源: https://data.ntpc.gov.tw/openapi/swagger-ui/index.html?configUrl=%2Fapi%2Fv1%2Fopenapi%2Fswagger%2Fconfig&urls.primaryName=%E6%96%B0%E5%8C%97%E5%B8%82%E6%94%BF%E5%BA%9C%E4%BA%A4%E9%80%9A%E5%B1%80(94)#/JSON/get_010e5b15_3823_4b20_b401_b1cf000550c5_json
 
@@ -19,11 +18,13 @@ fetch('/api/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?page=1&size=9
   .then(res => res.text())
   .then(data => {
     uBikeStops.value = JSON.parse(data);
-    filteredStops.value = uBikeStops.value;
     result.value = uBikeStops.value.slice(0, pageSize.value);
     updatePagination();
   });
 
+const filteredStops = computed(() => {
+  return uBikeStops.value.filter((s) => s.sna.includes(searchText.value));
+});
 const timeFormat = (val) => {
   const pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
   return val.replace(pattern, '$1/$2/$3 $4:$5:$6');
@@ -31,7 +32,7 @@ const timeFormat = (val) => {
 
 const searchText = ref('');
 watch(searchText, (val) => {
-  filterBus(val);
+  currentPage.value = 1;
 });
 const filterBus = (keyword) => {
   filteredStops.value = uBikeStops.value.filter((s) => s.sna.includes(keyword));
@@ -80,6 +81,13 @@ const goToPage = (page) => {
   currentPage.value = page;
   updateResult();
 };
+
+watch(searchText, () => {
+  currentPage.value = 1;
+  updatePagination();
+});
+
+
 
 </script>
 
