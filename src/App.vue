@@ -50,19 +50,19 @@ const updateResult = () => {
 };
 
 const sortCarByAsc = () => {
-  result.value = result.value.sort((a, b) => a.sbi - b.sbi);
+  result.value = filteredStops.value.sort((a, b) => a.sbi - b.sbi).slice(0, pageSize.value);
 };
 
 const sortCarByDesc = () => {
-  result.value = result.value.sort((a, b) => b.sbi - a.sbi);
+  result.value = filteredStops.value.sort((a, b) => b.sbi - a.sbi).slice(0, pageSize.value);
 };
 
 const sortParkingGridByAsc = () => {
-  result.value = result.value.sort((a, b) => a.tot - b.tot);
+  result.value = filteredStops.value.sort((a, b) => a.tot - b.tot).slice(0, pageSize.value);
 };
 
 const sortParkingGridByDesc = () => {
-  result.value = result.value.sort((a, b) => b.tot - a.tot);
+  result.value = filteredStops.value.sort((a, b) => b.tot - a.tot).slice(0, pageSize.value);
 };
 
 const pageCount = [10,20,30];
