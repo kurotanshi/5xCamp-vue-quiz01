@@ -34,12 +34,6 @@ const searchText = ref('');
 watch(searchText, (val) => {
   currentPage.value = 1;
 });
-const filterBus = (keyword) => {
-  filteredStops.value = uBikeStops.value.filter((s) => s.sna.includes(keyword));
-  currentPage.value = 1;
-  updatePagination();
-};
-
 const updatePagination = () => {
   pages.value = Math.ceil(filteredStops.value.length / pageSize.value);
   updateResult();
@@ -66,15 +60,11 @@ const sortParkingGridByDesc = () => {
   result.value = filteredStops.value.sort((a, b) => b.tot - a.tot).slice(0, pageSize.value);
 };
 
+
 const pageCount = [10,20,30];
 const pageSize = ref(pageCount[0]);
 
-watch(pageSize, (val) => {
-  currentPage.value = 1;
-  updatePagination();
-});
-
-const pages = computed(() => {
+const pages = computed(  () => {
   return Math.ceil(filteredStops.value.length / pageSize.value);
 });
 const goToPage = (page) => {
@@ -85,7 +75,7 @@ const goToPage = (page) => {
   updateResult();
 };
 
-watch(searchText, () => {
+watch([searchText,pageSize], () => {
   currentPage.value = 1;
   updatePagination();
 });
